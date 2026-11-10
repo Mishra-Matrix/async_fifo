@@ -134,26 +134,15 @@ async_fifo/
 
 ## How to Run
 
-**EDA Playground:** paste the five `rtl/` files and `sva/async_fifo_sva.sv` into
-the Design box and `tb/tb_async_fifo.sv` into the Testbench box. Set Top module to
-`tb_async_fifo`, choose Siemens Questa, tick "Open EPWave after run".
+Simulation (Questa / ModelSim):
 
-**Questa / ModelSim:**
-```
-cd sim
-vsim -c -do run_questa.do
-```
+    cd sim
+    vsim -c -do run_questa.do
 
-**Vivado simulator:**
-```
-cd sim
-sh run_xsim.sh
-```
+Verified with Questa 2025.2.
 
-**Vivado synthesis:** add the five `rtl/` files as design sources and
-`constraints/async_fifo.xdc` as the constraint file, top = `async_fifo`,
-synthesis option `-mode out_of_context`. After synthesis, run
-*Reports → Timing → Report CDC* to see the synchronizers recognised.
+Synthesis: Vivado, out-of-context mode, using the files in `rtl/` and
+`constraints/async_fifo.xdc`.
 
 ## Results
 
