@@ -76,36 +76,25 @@ async_fifo/
 
 ## Design Notes
 
-**Why Gray code?** A binary counter can change several bits at once
-(7 → 8 is `0111 → 1000`). If the other clock samples during that change it can
-see a completely wrong value. A Gray counter changes exactly one bit per
-increment, so a sampled pointer is always either the old or the new value.
-
-**Why two flip-flops?** The first synchronizer flop may go metastable when its
-input changes near the clock edge. The second flop gives it a full clock period
-to settle, which makes the probability of failure (MTBF) negligible.
-
-**Full and empty.** Pointers are one bit wider than the address.
-- *Empty* (read domain): next Gray read pointer == synchronized Gray write pointer.
-- *Full* (write domain): next Gray write pointer == synchronized Gray read pointer
-  with its **two MSBs inverted** (Gray-code equivalent of "same address, one more wrap").
-
-**Pessimistic flags (by design).** Each side sees the other pointer about two
-clock cycles late. So `full` can stay set a little after a read has made room,
-and `empty` can stay set a little after a write has added data. The FIFO is
-therefore never overwritten and never read when empty; it only loses a few
-cycles of throughput. `wr_count` / `rd_count` are pessimistic in the same way.
-
-**Why depth must be a power of 2.** The Gray-code sequence only wraps with a
-single-bit change when the counter wraps at a power of 2.
-
-**Reset.** Assert `wrst_n` and `rrst_n` together and release each synchronously
-to its own clock. In a full system a reset synchronizer would generate them.
-
-**CDC constraints.** `set_max_delay -datapath_only` bounds the pointer and memory
-crossing paths so all bits of a Gray pointer arrive within one clock period of
-each other. A plain `set_false_path` or `set_clock_groups -asynchronous` would
-leave the bit-to-bit skew unconstrained.
+- **Pointers:** read and write pointers are one bit wider than the address. The
+  binary pointer addresses the memory; a Gray-coded copy crosses to the other
+  domain so only one bit changes per increment.
+- **Synchronizers:** each Gray pointer passes through a two-flop synchronizer
+  (`ASYNC_REG`), giving the first stage a full destination-clock period to
+  resolve metastability.
+- **Full / empty:** empty is computed in the read domain (next read pointer equals
+  the synchronized write pointer); full in the write domain (next write pointer
+  equals the synchronized read pointer with its two MSBs inverted). Both flags
+  are registered.
+- **Flag latency:** each side sees the other pointer about two cycles late, so
+  `full` / `empty` can clear a few cycles after space or data is available. This
+  costs throughput, not correctness; `wr_count` / `rd_count` are conservative in
+  the same way.
+- **Depth:** must be a power of 2 so the Gray sequence wraps with a single-bit change.
+- **Reset:** `wrst_n` and `rrst_n` are asserted together and released synchronously
+  to their own clocks.
+- **CDC constraints:** `set_max_delay -datapath_only` limits the pointer and memory
+  crossings to one clock period, keeping Gray-code bit skew below a cycle.
 
 ## Verification
 
