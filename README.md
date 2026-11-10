@@ -51,7 +51,6 @@ async_fifo/
 ├── tb/tb_async_fifo.sv    # Self-checking testbench
 ├── constraints/async_fifo.xdc  # Clocks + CDC constraints for Vivado
 ├── sim/run_questa.do      # Questa/ModelSim script
-├── sim/run_xsim.sh        # Vivado xsim script
 └── README.md
 ```
 
